@@ -4,34 +4,80 @@ import { NextResponse } from 'next/server';
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export async function GET() {
-  const client = await getClientPromise();
+  try {
+    const client = await getClientPromise();
 
-  const pokemonColl = client.db('pokemon').collection('pokemon');
+    const pokemonColl = client.db('pokemon').collection('pokemon');
 
-  // 모든 포켓몬 조회
-  const pokemons = await pokemonColl
-    .find({}, { projection: { id: 1, name: 1 } })
-    .toArray();
-  console.log(`총 ${pokemons.length}마리 처리 시작`);
+    // 모든 포켓몬 조회
+    const pokemons = await pokemonColl.find({}).toArray();
 
-  for (const pokemon of pokemons) {
-    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon.id}`);
-    const data = await res.json();
-    const enName = data.name; // 영어 소문자 이름
+    await Promise.all(
+      pokemons.map(async (pokemon) => {
+        const lv1Stats = pokemon.lv1Stats;
 
-    const cryUrl = `https://play.pokemonshowdown.com/audio/cries/${enName}.mp3`;
+        const statGrowth = pokemon.statGrowth;
 
-    await client
-      .db('pokemon')
-      .collection('pokemon')
-      .updateOne({ id: pokemon.id }, { $set: { cryUrl } });
+        // lv1Stats 합치기
+        const newLv1Stats = {
+          ...lv1Stats,
 
-    console.log(`✓ ${pokemon.name} (${enName}) → ${cryUrl}`);
-    await sleep(200);
+          attack: (lv1Stats.attack ?? 0) + (lv1Stats['special-attack'] ?? 0),
+
+          defense: (lv1Stats.defense ?? 0) + (lv1Stats['special-defense'] ?? 0),
+        };
+
+        // special 제거
+        delete newLv1Stats['special-attack'];
+        delete newLv1Stats['special-defense'];
+
+        // statGrowth 합치기
+        const newStatGrowth = {
+          ...statGrowth,
+
+          attack:
+            (statGrowth.attack ?? 0) + (statGrowth['special-attack'] ?? 0),
+
+          defense:
+            (statGrowth.defense ?? 0) + (statGrowth['special-defense'] ?? 0),
+        };
+
+        // special 제거
+        delete newStatGrowth['special-attack'];
+        delete newStatGrowth['special-defense'];
+
+        await pokemonColl.updateOne(
+          {
+            _id: pokemon._id,
+          },
+          {
+            $set: {
+              lv1Stats: newLv1Stats,
+
+              statGrowth: newStatGrowth,
+            },
+          },
+        );
+
+        console.log(`${pokemon.name} 업데이트 완료`);
+      }),
+    );
+
+    return NextResponse.json({
+      ok: true,
+      message: 'special stat 병합 완료',
+    });
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      {
+        ok: false,
+        message: '업데이트 실패',
+      },
+      {
+        status: 500,
+      },
+    );
   }
-
-  return NextResponse.json({
-    ok: true,
-    message: `${pokemons.length}마리 cryUrl 추가 완료!`,
-  });
 }

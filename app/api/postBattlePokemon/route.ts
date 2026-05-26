@@ -6,44 +6,103 @@ export async function POST(req: Request) {
   // const avgLevel = Number(searchParams.get('avgLevel') ?? 50);
   // getClientPromise가 async 함수이므로 await를 붙여서 client 인스턴스를 가져옵니다.
   const client = await getClientPromise();
-  const pokemonColl = client.db('pokemon').collection('pokemon');
-  const pokemon = await pokemonColl
+
+  const db = client.db('pokemon');
+
+  const pokemonColl = db.collection('pokemon');
+
+  const skillsColl = db.collection('skills');
+
+  // 포켓몬 조회
+  const pokemon = await pokemonColl.findOne(
+    { id: 396 },
+    {
+      projection: {
+        lv1Stats: 1,
+        frontSprite: 1,
+        cryUrl: 1,
+        catchRate: 1,
+        statGrowth: 1,
+        moves: 1,
+      },
+    },
+  );
+
+  if (!pokemon) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: '포켓몬 없음',
+      },
+      {
+        status: 404,
+      },
+    );
+  }
+
+  // 기술 랜덤 4개
+  const selectedMoves = pokemon.moves
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 4);
+
+  // skills collection에서 기술 상세 조회
+  const moveData = await skillsColl
     .find(
-      { id: 396 },
+      {
+        koName: {
+          $in: selectedMoves,
+        },
+      },
       {
         projection: {
-          lv1Stats: 1,
-          backSprite: 1,
-          frontSprite: 1,
-          catchRate: 1,
-          backShinySprite: 1,
-          statGrowth: 1,
-          move: 1,
+          _id: 0,
+          koName: 1,
+          type: 1,
+          accuracy: 1,
+          power: 1,
+          priority: 1,
+          statChanges: 1,
         },
       },
     )
     .toArray();
-  console.log(pokemon);
 
+  // 레벨링
   const avgLevel = 50;
-  // 레벨링 로직
+
   const minLevel = Math.max(1, avgLevel - 5);
+
   const maxLevel = avgLevel + 5;
+
   const enemyLevel =
     Math.floor(Math.random() * (maxLevel - minLevel + 1)) + minLevel;
 
-  const emeny = {
+  const result = {
     id: 396,
+
     lv: enemyLevel,
-    move: pokemon[0].moves.sort(() => Math.random() - 0.5).slice(0, 4),
+
+    moves: moveData,
+
+    frontSprite: pokemon.frontSprite,
+
+    cryUrl: pokemon.cryUrl,
+
     state: {
-      hp: pokemon[0].lv1Stats.hp + pokemon[0].statGrowth.hp * enemyLevel,
-      atk: pokemon[0].lv1Stats.atk + pokemon[0].statGrowth.atk * enemyLevel,
-      def: pokemon[0].lv1Stats.def + pokemon[0].statGrowth.def * enemyLevel,
-      spd: pokemon[0].lv1Stats.spd + pokemon[0].statGrowth.spd * enemyLevel,
-      catchRate: pokemon[0].catchRate,
+      hp: pokemon.lv1Stats.hp + pokemon.statGrowth.hp * enemyLevel,
+
+      atk: pokemon.lv1Stats.atk + pokemon.statGrowth.atk * enemyLevel,
+
+      def: pokemon.lv1Stats.def + pokemon.statGrowth.def * enemyLevel,
+
+      spd: pokemon.lv1Stats.spd + pokemon.statGrowth.spd * enemyLevel,
+
+      catchRate: pokemon.catchRate,
     },
   };
 
-  return NextResponse.json({ ok: true, result: emeny });
+  return NextResponse.json({
+    ok: true,
+    result,
+  });
 }
