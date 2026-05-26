@@ -4,57 +4,67 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   try {
     const client = await getClientPromise();
+
     const pokemonColl = client.db('pokemon').collection('pokemon');
-    const skillsColl = client.db('pokemon').collection('skills');
-
-    // skills collection에 존재하는 기술들 가져오기
-    const skills = await skillsColl.find({}).toArray();
-
-    // 영어 기술명 -> 한국어 기술명 매핑
-    const moveNameMap = new Map(
-      skills.map((skill) => [
-        skill.name, // ex: swords-dance
-        skill.koName, // ex: 칼춤
-      ]),
-    );
-
-    // 허용 영어 기술명 Set
-    const validMoveSet = new Set(skills.map((skill) => skill.name));
 
     // 모든 포켓몬 조회
     const pokemons = await pokemonColl.find({}).toArray();
 
-    // 업데이트
+    // 병렬 처리
     await Promise.all(
       pokemons.map(async (pokemon) => {
-        // skills collection에 존재하는 기술만 남김
-        const filteredMoves = pokemon.moves.filter((move: string) =>
-          validMoveSet.has(move),
-        );
+        try {
+          const pokeApiId = pokemon.id;
 
-        // 영어 -> 한국어 변환
-        const koMoves = filteredMoves.map((move: string) =>
-          moveNameMap.get(move),
-        );
+          // pokemon 데이터
+          const pokemonRes = await fetch(
+            `https://pokeapi.co/api/v2/pokemon/${pokeApiId}`,
+          );
 
-        await pokemonColl.updateOne(
-          {
-            _id: pokemon._id,
-          },
-          {
-            $set: {
-              moves: koMoves,
+          const pokemonData = await pokemonRes.json();
+
+          // species 데이터 (포획률)
+          const speciesRes = await fetch(
+            `https://pokeapi.co/api/v2/pokemon-species/${pokeApiId}`,
+          );
+
+          const speciesData = await speciesRes.json();
+
+          // 4세대 HGSS 도트 이미지
+          const sprites =
+            pokemonData.sprites.versions['generation-iv'][
+              'heartgold-soulsilver'
+            ];
+
+          await pokemonColl.updateOne(
+            {
+              _id: pokemon._id,
             },
-          },
-        );
+            {
+              $set: {
+                frontSprite: sprites.front_default ?? '',
 
-        console.log(`${pokemon.name} 완료`);
+                backSprite: sprites.back_default ?? '',
+
+                frontShinySprite: sprites.front_shiny ?? '',
+
+                backShinySprite: sprites.back_shiny ?? '',
+
+                catchRate: speciesData.capture_rate ?? 45,
+              },
+            },
+          );
+
+          console.log(`${pokemon.name} 업데이트 완료`);
+        } catch (error) {
+          console.error(`${pokemon.name} 업데이트 실패`, error);
+        }
       }),
     );
 
     return NextResponse.json({
       ok: true,
-      message: 'moves 한국어 변환 + 필터링 완료',
+      message: '4세대 도트 sprite + 포획률 업데이트 완료',
     });
   } catch (error) {
     console.error(error);
@@ -62,15 +72,11 @@ export async function GET() {
     return NextResponse.json(
       {
         ok: false,
-        message: '실패',
+        message: '업데이트 실패',
       },
       {
         status: 500,
       },
     );
   }
-
-  // const pokemon = await pokemonColl.find({}).toArray();
-
-  // return NextResponse.json({ ok: true, result: pokemon });
 }
