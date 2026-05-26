@@ -1,8 +1,6 @@
 import { getClientPromise } from '@/app/lib/mongodb';
 import { NextResponse } from 'next/server';
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 export async function GET() {
   const client = await getClientPromise();
 
@@ -36,12 +34,9 @@ export async function GET() {
 
   return NextResponse.json({
     ok: true,
-
     message: '포켓몬 박스 조회',
-
     data: {
       isMyPokemon,
-
       pokemonBox,
     },
   });
