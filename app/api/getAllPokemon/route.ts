@@ -5,24 +5,15 @@ export async function GET() {
   const client = await getClientPromise();
   const pokemonColl = client.db('pokemon').collection('pokemon');
 
-  const result = await pokemonColl.updateMany({}, [
+  const result = await pokemonColl.updateMany(
+    {},
     {
-      $set: {
-        'baseStats.attack': {
-          $add: [
-            '$baseStats.attack',
-            { $getField: { field: 'special-attack', input: '$baseStats' } },
-          ],
-        },
-        'baseStats.defense': {
-          $add: [
-            '$baseStats.defense',
-            { $getField: { field: 'special-defense', input: '$baseStats' } },
-          ],
-        },
+      $unset: {
+        'baseStats.special-attack': '',
+        'baseStats.special-defense': '',
       },
     },
-  ]);
+  );
 
   return NextResponse.json({ ok: true, result });
   // const pokemon = await pokemonColl.find({}).toArray();
