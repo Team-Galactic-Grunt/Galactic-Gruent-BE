@@ -6,33 +6,66 @@ const iconUrl = (id: number) =>
   `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-vii/icons/${id}.png`;
 
 export async function GET() {
-  const client = await getClientPromise();
+  try {
+    const client = await getClientPromise();
 
-  const db = client.db('pokemon');
+    const db = client.db('pokemon');
 
-  const pokemonBoxColl = db.collection('pokemon_box');
+    const pokemonBoxColl = db.collection('pokemon_box');
 
-  const skillsColl = db.collection('skills');
+    const historyColl = db.collection('game_history');
 
-  // pokemon_box 전체 조회
-  const pokemonBox = await pokemonBoxColl.find({}).toArray();
+    // pokemon_box 전체 데이터
+    const allPokemon = await pokemonBoxColl.find({}).toArray();
 
-  const result = await pokemonBoxColl.updateMany({}, [
-    {
-      $set: {
-        iconUrl: {
-          $concat: [
-            'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-vii/icons/',
-            { $toString: '$id' },
-            '.png',
-          ],
+    // 현재 지닌 포켓몬
+    const isMyPokemon = allPokemon.filter(
+      (pokemon) => pokemon.myPokemon === true,
+    );
+
+    // 박스 포켓몬
+    const pokemonBox = allPokemon.filter(
+      (pokemon) => pokemon.myPokemon === false,
+    );
+
+    // game_history 저장
+    await historyColl.updateOne(
+      {},
+      {
+        $set: {
+          isMyPokemon,
+
+          pokemonBox,
         },
       },
-    },
-  ]);
+      {
+        upsert: true,
+      },
+    );
 
-  return NextResponse.json({
-    ok: true,
-    message: `${result.modifiedCount}개 iconUrl 추가 완료!`,
-  });
+    return NextResponse.json({
+      ok: true,
+
+      message: '포켓몬 분류 완료',
+
+      data: {
+        isMyPokemon,
+
+        pokemonBox,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      {
+        ok: false,
+
+        message: '업데이트 실패',
+      },
+      {
+        status: 500,
+      },
+    );
+  }
 }

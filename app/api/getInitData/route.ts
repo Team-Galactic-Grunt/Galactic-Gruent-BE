@@ -9,5 +9,7 @@ export async function GET() {
   const pokemonColl = client.db('pokemon').collection('game_history');
   const skillsColl = client.db('pokemon').collection('skills');
 
-  return NextResponse.json({ ok: true, message: '초기 데이터 API' });
+  const result = await pokemonColl.find({}).toArray();
+
+  return NextResponse.json({ ok: true, message: '초기 데이터 API', result });
 }
