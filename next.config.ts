@@ -7,6 +7,7 @@ import type { NextConfig } from 'next';
 // export default nextConfig;
 // next.config.ts
 const nextConfig: NextConfig = {
+  transpilePackages: ['swagger-ui-react'], // ← 추가
   async headers() {
     return [
       {

@@ -67,36 +67,27 @@ export async function POST(req: Request) {
     )
     .toArray();
 
+  console.log(pokemon, moveData);
+
   // 레벨링
   const avgLevel = 50;
-
   const minLevel = Math.max(1, avgLevel - 5);
-
   const maxLevel = avgLevel + 5;
 
   const enemyLevel =
     Math.floor(Math.random() * (maxLevel - minLevel + 1)) + minLevel;
-
   const result = {
-    id: 396,
-
+    koName: pokemon.koName,
+    id: pokemon.id,
     lv: enemyLevel,
-
     moves: moveData,
-
     frontSprite: pokemon.frontSprite,
-
     cryUrl: pokemon.cryUrl,
-
     state: {
       hp: pokemon.lv1Stats.hp + pokemon.statGrowth.hp * enemyLevel,
-
-      atk: pokemon.lv1Stats.atk + pokemon.statGrowth.atk * enemyLevel,
-
-      def: pokemon.lv1Stats.def + pokemon.statGrowth.def * enemyLevel,
-
-      spd: pokemon.lv1Stats.spd + pokemon.statGrowth.spd * enemyLevel,
-
+      atk: pokemon.lv1Stats.attack + pokemon.statGrowth.attack * enemyLevel,
+      def: pokemon.lv1Stats.defense + pokemon.statGrowth.defense * enemyLevel,
+      spd: pokemon.lv1Stats.speed + pokemon.statGrowth.speed * enemyLevel,
       catchRate: pokemon.catchRate,
     },
   };

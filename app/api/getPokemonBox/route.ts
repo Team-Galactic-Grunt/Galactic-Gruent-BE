@@ -1,6 +1,17 @@
 import { getClientPromise } from '@/app/lib/mongodb';
 import { NextResponse } from 'next/server';
 
+/**
+ * @swagger
+ * /api/getPokemonBox:
+ *   get:
+ *     summary: 포켓몬 박스
+ *     tags: [박스]
+
+ *     responses:
+ *       200:
+ *         description: 포켓몬 박스 데이터 반환
+ */
 export async function GET() {
   const client = await getClientPromise();
 
