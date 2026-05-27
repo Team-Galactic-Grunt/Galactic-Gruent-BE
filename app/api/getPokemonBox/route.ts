@@ -5,12 +5,46 @@ import { NextResponse } from 'next/server';
  * @swagger
  * /api/getPokemonBox:
  *   get:
- *     summary: 포켓몬 박스
  *     tags: [박스]
-
+ *     summary: 포켓몬 박스
+ *     description: isMyPokemon(현재 소지 포켓몬)과 pokemonBox(박스 포켓몬) 반환
  *     responses:
  *       200:
- *         description: 포켓몬 박스 데이터 반환
+ *         description: 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     isMyPokemon:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           catchId:
+ *                             type: number
+ *                           name:
+ *                             type: string
+ *                           frontSprite:
+ *                             type: string
+ *                     pokemonBox:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           catchId:
+ *                             type: number
+ *                           name:
+ *                             type: string
+ *                           frontSprite:
+ *                             type: string
  */
 export async function GET() {
   const client = await getClientPromise();

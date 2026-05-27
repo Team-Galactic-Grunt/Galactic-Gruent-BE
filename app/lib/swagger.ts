@@ -1,5 +1,6 @@
 // lib/swagger.ts
 import swaggerJsdoc from 'swagger-jsdoc';
+import { createSwaggerSpec } from 'next-swagger-doc';
 
 const options: swaggerJsdoc.Options = {
   definition: {
