@@ -1,5 +1,6 @@
 import { getClientPromise } from '@/app/lib/mongodb'; // ◀ 중괄호 { } 추가
 import { NextResponse } from 'next/server';
+import { types } from 'util';
 
 export async function POST(req: Request) {
   // 레벨 받아오기
@@ -18,12 +19,15 @@ export async function POST(req: Request) {
     { id: 396 },
     {
       projection: {
+        name: 1,
+        catchRate: 1,
         lv1Stats: 1,
         frontSprite: 1,
         cryUrl: 1,
-        catchRate: 1,
         statGrowth: 1,
         moves: 1,
+        id: 1,
+        types: 1,
       },
     },
   );
@@ -67,7 +71,8 @@ export async function POST(req: Request) {
     )
     .toArray();
 
-  console.log(pokemon, moveData);
+  console.log('pokemon : ', pokemon);
+  console.log('moveData : ', moveData);
 
   // 레벨링
   const avgLevel = 50;
@@ -77,7 +82,9 @@ export async function POST(req: Request) {
   const enemyLevel =
     Math.floor(Math.random() * (maxLevel - minLevel + 1)) + minLevel;
   const result = {
-    koName: pokemon.koName,
+    name: pokemon.name,
+    types: pokemon.types,
+    catchRate: pokemon.catchRate,
     id: pokemon.id,
     lv: enemyLevel,
     moves: moveData,
