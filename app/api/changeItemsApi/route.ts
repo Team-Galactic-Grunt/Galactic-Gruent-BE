@@ -1,8 +1,7 @@
 import { getClientPromise } from '@/app/lib/mongodb';
 import { NextResponse } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
 
-export async function GET(req: Request) {
+export async function GET() {
   // const body = await req.json();
   // const { bag } = body;
 
