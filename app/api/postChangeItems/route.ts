@@ -2,59 +2,33 @@ import { getClientPromise } from '@/app/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 
-function calcStatsAtLevel(
-  lv1Stats: Record<string, number>,
-  statGrowth: Record<string, number>,
-  level: number,
-): Record<string, number> {
-  const stats: Record<string, number> = {};
-  for (const stat in lv1Stats) {
-    stats[stat] = lv1Stats[stat] + statGrowth[stat] * (level - 1);
-  }
-  return stats;
-}
-
-export async function PUT(req: Request) {
+export async function POST(req: Request) {
   const body = await req.json();
-  const { position, bag, isMyPokemon, pokemonBox } = body;
+  const { bag } = body;
+
+  console.log(`bag: ${JSON.stringify(bag)}`);
 
   const client = await getClientPromise();
-  const pokemonColl = client.db('pokemon').collection('pokemonBox');
-  // const boxColl = client.db('pokemon').collection('pokemon_box');
+  const db = client.db('pokemon');
+  const historyColl = db.collection('game_history');
 
-  // // 모든 포켓몬 조회
-  // const pokemons = await pokemonColl
-  //   .find({ sinnohNo: { $gte: 1, $lte: 15 } })
-  //   .sort({ sinnohNo: 1 })
-  //   .toArray();
-  // const LEVEL = 50;
-  // const boxPokemons = pokemons.map((pokemon, index) => {
-  //   const currentStats = calcStatsAtLevel(
-  //     pokemon.lv1Stats,
-  //     pokemon.statGrowth,
-  //     LEVEL,
-  //   );
-  //   return {
-  //     catchId: uuidv4(),
-  //     id: pokemon.id,
-  //     name: pokemon.name,
-  //     sinnohNo: pokemon.sinnohNo,
-  //     types: pokemon.types,
-  //     level: LEVEL,
-  //     currentHp: currentStats.hp,
-  //     maxHp: currentStats.hp,
-  //     baseStats: currentStats,
-  //     moves: pokemon.moves.slice(0, 4),
-  //     frontSprite: pokemon.frontSprite,
-  //     backSprite: pokemon.backSprite,
-  //     cryUrl: pokemon.cryUrl,
-  //     // gender: Math.random() > 0.5 ? 'male' : 'female',
-  //     caughtAt: new Date(),
-  //   };
-  // });
-  // await boxColl.insertMany(boxPokemons);
-  // return NextResponse.json({
-  //   ok: true,
-  //   message: `${boxPokemons.length}마리 pokemon_box에 추가 완료!`,
-  // });
+  const result = await historyColl.updateOne(
+    {},
+    {
+      $set: bag,
+    },
+    { upsert: true },
+  );
+
+  if (result.acknowledged) {
+    return NextResponse.json({
+      ok: true,
+      message: '갯수 반영 성공',
+    });
+  }
+
+  return NextResponse.json({
+    ok: false,
+    message: '갯수 반영 실패',
+  });
 }
