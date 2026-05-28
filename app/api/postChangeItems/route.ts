@@ -15,9 +15,13 @@ function calcStatsAtLevel(
 }
 
 export async function PUT(req: Request) {
-  // const client = await getClientPromise();
-  // const pokemonColl = client.db('pokemon').collection('pokemon');
+  const body = await req.json();
+  const { position, bag, isMyPokemon, pokemonBox } = body;
+
+  const client = await getClientPromise();
+  const pokemonColl = client.db('pokemon').collection('pokemonBox');
   // const boxColl = client.db('pokemon').collection('pokemon_box');
+
   // // 모든 포켓몬 조회
   // const pokemons = await pokemonColl
   //   .find({ sinnohNo: { $gte: 1, $lte: 15 } })

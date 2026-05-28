@@ -1,6 +1,5 @@
 import { getClientPromise } from '@/app/lib/mongodb'; // ◀ 중괄호 { } 추가
 import { NextResponse } from 'next/server';
-import { types } from 'util';
 
 export async function POST(req: Request) {
   // 레벨 받아오기
