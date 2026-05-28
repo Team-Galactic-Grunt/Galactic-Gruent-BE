@@ -85,11 +85,11 @@ export async function POST(req: Request) {
     types: pokemon.types,
     catchRate: pokemon.catchRate,
     id: pokemon.id,
-    lv: enemyLevel,
+    level: enemyLevel,
     moves: moveData,
     frontSprite: pokemon.frontSprite,
     cryUrl: pokemon.cryUrl,
-    state: {
+    baseStats: {
       hp: pokemon.lv1Stats.hp + pokemon.statGrowth.hp * enemyLevel,
       atk: pokemon.lv1Stats.attack + pokemon.statGrowth.attack * enemyLevel,
       def: pokemon.lv1Stats.defense + pokemon.statGrowth.defense * enemyLevel,

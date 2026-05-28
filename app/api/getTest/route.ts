@@ -15,10 +15,10 @@ export async function GET() {
 
     const historyColl = db.collection('game_history');
 
-    // pokemon_box 전체 데이터
+    // pokemon_box 전체 조회
     const allPokemon = await pokemonBoxColl.find({}).toArray();
 
-    // 현재 지닌 포켓몬
+    // 현재 파티 포켓몬
     const isMyPokemon = allPokemon.filter(
       (pokemon) => pokemon.myPokemon === true,
     );
@@ -28,7 +28,7 @@ export async function GET() {
       (pokemon) => pokemon.myPokemon === false,
     );
 
-    // game_history 저장
+    // game_history 업데이트
     await historyColl.updateOne(
       {},
       {
@@ -46,12 +46,12 @@ export async function GET() {
     return NextResponse.json({
       ok: true,
 
-      message: '포켓몬 분류 완료',
+      message: 'game_history 업데이트 완료',
 
       data: {
-        isMyPokemon,
+        isMyPokemonCount: isMyPokemon.length,
 
-        pokemonBox,
+        pokemonBoxCount: pokemonBox.length,
       },
     });
   } catch (error) {
