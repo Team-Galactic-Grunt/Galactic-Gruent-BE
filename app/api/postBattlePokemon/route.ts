@@ -1,6 +1,14 @@
 import { getClientPromise } from '@/app/lib/mongodb'; // ◀ 중괄호 { } 추가
 import { NextResponse } from 'next/server';
 
+function calcNeedExp(level: number) {
+  return Math.floor(0.8 * level ** 2 + level * 15);
+}
+
+function calcGiveExp(level: number) {
+  return Math.floor(calcNeedExp(level) * 0.3);
+}
+
 export async function POST(req: Request) {
   // 레벨 받아오기
   // const avgLevel = Number(searchParams.get('avgLevel') ?? 50);
@@ -89,6 +97,7 @@ export async function POST(req: Request) {
     moves: moveData,
     frontSprite: pokemon.frontSprite,
     cryUrl: pokemon.cryUrl,
+    exp: calcGiveExp(enemyLevel),
     baseStats: {
       hp: pokemon.lv1Stats.hp + pokemon.statGrowth.hp * enemyLevel,
       atk: pokemon.lv1Stats.attack + pokemon.statGrowth.attack * enemyLevel,

@@ -6,10 +6,28 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export async function GET() {
   const client = await getClientPromise();
 
-  const pokemonColl = client.db('pokemon').collection('game_history');
-  const skillsColl = client.db('pokemon').collection('skills');
+  const historyColl = client.db('pokemon').collection('game_history');
+  const pokedexColl = client.db('pokemon').collection('pokedex');
 
-  const result = await pokemonColl.find({}).toArray();
+  const pokedex = await pokedexColl
+    .find({}, { projection: { _id: 0 } })
+    .toArray();
 
-  return NextResponse.json({ ok: true, message: '초기 데이터 API', result });
+  const result = await historyColl.findOne({}, { projection: { _id: 0 } });
+
+  //   console.log(
+  //     historyResult?.position,
+  //     historyResult?.bag,
+  //     historyResult?.isMyPokemon,
+  //     historyResult?.pokemonBox,
+  //   );
+
+  return NextResponse.json({
+    ok: true,
+    message: '초기 데이터 API',
+    result: {
+      ...result,
+      pokedex,
+    },
+  });
 }
