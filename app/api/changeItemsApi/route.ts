@@ -39,9 +39,9 @@ export async function GET() {
 // POST 함수
 
 export async function POST(req: Request) {
-  const bag = await req.json();
-
-  console.log(`bag: ${JSON.stringify(bag)}`);
+  const data = await req.json();
+  console.log(`data: ${JSON.stringify(data)}`);
+  console.log(data);
 
   const client = await getClientPromise();
   const db = client.db('pokemon');
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
   const result = await historyColl.updateOne(
     {},
     {
-      $set: { bag },
+      $set: { bag: data },
     },
     { upsert: true },
   );

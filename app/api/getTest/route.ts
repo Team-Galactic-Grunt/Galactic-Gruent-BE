@@ -57,7 +57,7 @@ export async function GET() {
 
   return NextResponse.json({
     ok: true,
-    message: '경험치 데이터 추가 완료',
+    message: 'bag 빼기',
     data: historyResult,
   });
 }
