@@ -2,62 +2,32 @@ import { getClientPromise } from '@/app/lib/mongodb';
 import { NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 
-// 필요 경험치 계산 공식
-function calcNeedExp(level: number) {
-  return Math.floor(0.8 * level ** 2 + level * 15);
-}
-
 export async function GET() {
   const client = await getClientPromise();
 
   const db = client.db('pokemon');
 
-  const historyColl = db.collection('game_history');
-  const historyResult = await historyColl.updateMany({}, [
+  const pokemonColl = db.collection('pokemon');
+  const result = await pokemonColl.updateMany(
+    {},
     {
       $set: {
-        bag: '$bag.bag',
+        habitat: null,
       },
     },
-  ]);
+  );
 
-  // // game_history 가져오기
-  // const history = await historyColl.findOne({});
-
-  // // 포켓몬 경험치 데이터 추가
-  // const addExpData = (pokemonList: any[]) => {
-  //   return pokemonList.map((pokemon) => ({
-  //     ...pokemon,
-
-  //     // 현재 경험치
-  //     currentExp: 0,
-
-  //     // 다음 레벨 필요 경험치
-  //     needExp: calcNeedExp(pokemon.level),
-  //   }));
-  // };
-
-  // // 내 포켓몬
-  // const updatedIsMyPokemon = addExpData(history?.isMyPokemon);
-
-  // // 박스 포켓몬
-  // const updatedPokemonBox = addExpData(history?.pokemonBox);
-
-  // // 업데이트
-  // await historyColl.updateOne(
-  //   { _id: history?._id },
+  // const historyResult = await historyColl.updateMany({}, [
   //   {
   //     $set: {
-  //       isMyPokemon: updatedIsMyPokemon,
-
-  //       pokemonBox: updatedPokemonBox,
+  //       bag: '$bag.bag',
   //     },
   //   },
-  // );
+  // ]);
 
   return NextResponse.json({
     ok: true,
-    message: 'bag 빼기',
-    data: historyResult,
+    message: 'habitat 필드 넣기 성공',
+    data: result,
   });
 }

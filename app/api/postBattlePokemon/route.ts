@@ -16,28 +16,51 @@ export async function POST(req: Request) {
   const client = await getClientPromise();
 
   const db = client.db('pokemon');
-
   const pokemonColl = db.collection('pokemon');
-
   const skillsColl = db.collection('skills');
 
-  // 포켓몬 조회
-  const pokemon = await pokemonColl.findOne(
-    { id: 396 },
-    {
-      projection: {
-        name: 1,
-        catchRate: 1,
-        lv1Stats: 1,
-        frontSprite: 1,
-        cryUrl: 1,
-        statGrowth: 1,
-        moves: 1,
-        id: 1,
-        types: 1,
+  const data = await req.json();
+  console.log('data : ', data.eventZone, data.avgLevel);
+
+  if (!data.eventZone || !data.avgLevel) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: '이벤트 존 또는 평균 레벨이 제공되지 않았습니다.',
       },
-    },
-  );
+      {
+        status: 400,
+      },
+    );
+  }
+
+  // 포켓몬 조회
+  const [pokemon] = await pokemonColl
+    .aggregate([
+      {
+        $match: {
+          habitat: data.eventZone, // pokemon.habitat 필드가 eventZone과 일치하는 것 필터링
+        },
+      },
+      {
+        $sample: { size: 1 }, // 매칭된 포켓몬 중 무작위 1마리 선택
+      },
+      {
+        $project: {
+          // 기존 projection과 동일한 역할
+          name: 1,
+          catchRate: 1,
+          lv1Stats: 1,
+          frontSprite: 1,
+          cryUrl: 1,
+          statGrowth: 1,
+          moves: 1,
+          id: 1,
+          types: 1,
+        },
+      },
+    ])
+    .toArray();
 
   if (!pokemon) {
     return NextResponse.json(
@@ -82,7 +105,7 @@ export async function POST(req: Request) {
   console.log('moveData : ', moveData);
 
   // 레벨링
-  const avgLevel = 50;
+  const avgLevel = data.avgLevel ?? 50;
   const minLevel = Math.max(1, avgLevel - 5);
   const maxLevel = avgLevel + 5;
 
