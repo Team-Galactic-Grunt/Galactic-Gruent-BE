@@ -14,6 +14,7 @@ export async function GET() {
     .toArray();
 
   const result = await historyColl.findOne({}, { projection: { _id: 0 } });
+  console.log('history result: ', result?.bag);
 
   //   console.log(
   //     historyResult?.position,
