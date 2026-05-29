@@ -6,66 +6,40 @@ const iconUrl = (id: number) =>
   `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-vii/icons/${id}.png`;
 
 export async function GET() {
-  try {
-    const client = await getClientPromise();
+  const client = await getClientPromise();
 
-    const db = client.db('pokemon');
+  const db = client.db('pokemon');
 
-    const pokemonBoxColl = db.collection('pokemon_box');
+  const pokemonColl = db.collection('pokemon');
+  const pokedexColl = db.collection('pokedex');
 
-    const historyColl = db.collection('game_history');
-
-    // pokemon_box 전체 조회
-    const allPokemon = await pokemonBoxColl.find({}).toArray();
-
-    // 현재 파티 포켓몬
-    const isMyPokemon = allPokemon.filter(
-      (pokemon) => pokemon.myPokemon === true,
-    );
-
-    // 박스 포켓몬
-    const pokemonBox = allPokemon.filter(
-      (pokemon) => pokemon.myPokemon === false,
-    );
-
-    // game_history 업데이트
-    await historyColl.updateOne(
+  // pokemon collection의 모든 포켓몬 가져오기
+  const pokemonList = await pokemonColl
+    .find(
       {},
       {
-        $set: {
-          isMyPokemon,
-
-          pokemonBox,
+        projection: {
+          id: 1,
+          weight: 1,
         },
       },
+    )
+    .toArray();
+
+  // pokedex 업데이트
+  for (const pokemon of pokemonList) {
+    await pokedexColl.updateOne(
+      { id: pokemon.id },
       {
-        upsert: true,
-      },
-    );
-
-    return NextResponse.json({
-      ok: true,
-
-      message: 'game_history 업데이트 완료',
-
-      data: {
-        isMyPokemonCount: isMyPokemon.length,
-
-        pokemonBoxCount: pokemonBox.length,
-      },
-    });
-  } catch (error) {
-    console.error(error);
-
-    return NextResponse.json(
-      {
-        ok: false,
-
-        message: '업데이트 실패',
-      },
-      {
-        status: 500,
+        $set: {
+          weight: pokemon.weight,
+        },
       },
     );
   }
+
+  return NextResponse.json({
+    ok: true,
+    message: 'pokedex에 weight 추가 완료',
+  });
 }

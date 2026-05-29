@@ -1,6 +1,7 @@
 import { getClientPromise } from '@/app/lib/mongodb';
 import { NextResponse } from 'next/server';
 
+// GET 함수
 export async function GET() {
   // const body = await req.json();
   // const { bag } = body;
@@ -35,9 +36,10 @@ export async function GET() {
   });
 }
 
+// POST 함수
+
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { bag } = body;
+  const bag = await req.json();
 
   console.log(`bag: ${JSON.stringify(bag)}`);
 
@@ -48,7 +50,7 @@ export async function POST(req: Request) {
   const result = await historyColl.updateOne(
     {},
     {
-      $set: bag,
+      $set: { bag },
     },
     { upsert: true },
   );
