@@ -100,9 +100,10 @@ export async function POST(req: Request) {
     exp: calcGiveExp(enemyLevel),
     baseStats: {
       hp: pokemon.lv1Stats.hp + pokemon.statGrowth.hp * enemyLevel,
-      atk: pokemon.lv1Stats.attack + pokemon.statGrowth.attack * enemyLevel,
-      def: pokemon.lv1Stats.defense + pokemon.statGrowth.defense * enemyLevel,
-      spd: pokemon.lv1Stats.speed + pokemon.statGrowth.speed * enemyLevel,
+      attack: pokemon.lv1Stats.attack + pokemon.statGrowth.attack * enemyLevel,
+      defense:
+        pokemon.lv1Stats.defense + pokemon.statGrowth.defense * enemyLevel,
+      speed: pokemon.lv1Stats.speed + pokemon.statGrowth.speed * enemyLevel,
       catchRate: pokemon.catchRate,
     },
   };
