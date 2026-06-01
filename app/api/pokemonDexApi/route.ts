@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getClientPromise } from '@/app/lib/mongodb';
 import { NextResponse } from 'next/server';
 
@@ -33,4 +34,33 @@ export async function GET() {
     message: '포켓몬 도감 조회',
     data: result,
   });
+}
+
+export async function POST(req: Request) {
+  const data = await req.json();
+  console.log(`data: ${JSON.stringify(data)}`);
+  console.log(data);
+
+  const client = await getClientPromise();
+  const db = client.db('pokemon');
+  const pokeDexColl = db.collection('pokedex');
+
+  const ops = data.map((pokemon: any) => ({
+    updateOne: {
+      filter: { id: pokemon.id },
+      update: { $set: pokemon },
+      upsert: true,
+    },
+  }));
+
+  const result = await pokeDexColl.bulkWrite(ops);
+
+  if (result.isOk()) {
+    return NextResponse.json({
+      ok: true,
+      message: `포켓덱스 ${result.upsertedCount + result.modifiedCount}개 반영 성공`,
+    });
+  }
+
+  return NextResponse.json({ ok: false, message: '반영 실패' });
 }
