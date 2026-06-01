@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   const skillsColl = db.collection('skills');
 
   const data = await req.json();
-  console.log('data : ', data.eventZone, data.avgLevel);
+  console.log('data : ', data.eventZone, data.avgLevel, data.pokemonId);
 
   if (!data.eventZone || !data.avgLevel) {
     return NextResponse.json(
@@ -34,43 +34,37 @@ export async function POST(req: Request) {
     );
   }
 
-  // 포켓몬 조회
-  const [pokemon] = await pokemonColl
-    .aggregate([
-      {
-        $match: {
-          habitat: data.eventZone, // pokemon.habitat 필드가 eventZone과 일치하는 것 필터링
-        },
-      },
-      {
-        $sample: { size: 1 }, // 매칭된 포켓몬 중 무작위 1마리 선택
-      },
-      {
-        $project: {
-          // 기존 projection과 동일한 역할
-          name: 1,
-          catchRate: 1,
-          lv1Stats: 1,
-          frontSprite: 1,
-          cryUrl: 1,
-          statGrowth: 1,
-          moves: 1,
-          id: 1,
-          types: 1,
-        },
-      },
-    ])
-    .toArray();
+  const projection = {
+    name: 1,
+    catchRate: 1,
+    lv1Stats: 1,
+    frontSprite: 1,
+    backSprite: 1,
+    cryUrl: 1,
+    statGrowth: 1,
+    moves: 1,
+    id: 1,
+    types: 1,
+    iconSprite: 1,
+  };
+
+  // pokemonId 유무에 따라 DB 조회 분기
+  const pokemon = data.pokemonId
+    ? await pokemonColl.findOne({ id: data.pokemonId }, { projection })
+    : (
+        await pokemonColl
+          .aggregate([
+            { $match: { habitat: data.eventZone } },
+            { $sample: { size: 1 } },
+            { $project: projection },
+          ])
+          .toArray()
+      )[0];
 
   if (!pokemon) {
     return NextResponse.json(
-      {
-        ok: false,
-        message: '포켓몬 없음',
-      },
-      {
-        status: 404,
-      },
+      { ok: false, message: '포켓몬 없음' },
+      { status: 404 },
     );
   }
 
@@ -79,38 +73,42 @@ export async function POST(req: Request) {
     .sort(() => Math.random() - 0.5)
     .slice(0, 4);
 
-  // skills collection에서 기술 상세 조회
-  const moveData = await skillsColl
-    .find(
-      {
-        koName: {
-          $in: selectedMoves,
+  const moveData = (
+    await skillsColl
+      .find(
+        { koName: { $in: selectedMoves } },
+        {
+          projection: {
+            _id: 0,
+            koName: 1,
+            type: 1,
+            accuracy: 1,
+            power: 1,
+            priority: 1,
+            statChanges: 1,
+            description: 1,
+            pp: 1,
+          },
         },
-      },
-      {
-        projection: {
-          _id: 0,
-          koName: 1,
-          type: 1,
-          accuracy: 1,
-          power: 1,
-          priority: 1,
-          statChanges: 1,
-        },
-      },
-    )
-    .toArray();
-
-  console.log('pokemon : ', pokemon);
-  console.log('moveData : ', moveData);
+      )
+      .toArray()
+  ).map(({ pp, ...rest }) => ({
+    ...rest,
+    maxpp: pp,
+    currentpp: pp,
+  }));
 
   // 레벨링
   const avgLevel = data.avgLevel ?? 50;
   const minLevel = Math.max(1, avgLevel - 5);
   const maxLevel = avgLevel + 5;
-
   const enemyLevel =
     Math.floor(Math.random() * (maxLevel - minLevel + 1)) + minLevel;
+
+  const hp = pokemon.lv1Stats.hp + pokemon.statGrowth.hp * enemyLevel;
+
+  console.log('iconSprite: ', pokemon.iconSprite);
+
   const result = {
     name: pokemon.name,
     types: pokemon.types,
@@ -119,20 +117,25 @@ export async function POST(req: Request) {
     level: enemyLevel,
     moves: moveData,
     frontSprite: pokemon.frontSprite,
+    backSprite: pokemon.backSprite,
+    iconUrl: pokemon.iconSprite,
+    maxHp: hp,
+    currentHp: hp,
+    currentExp: 0,
+    needExp: calcNeedExp(enemyLevel),
     cryUrl: pokemon.cryUrl,
     exp: calcGiveExp(enemyLevel),
     baseStats: {
-      hp: pokemon.lv1Stats.hp + pokemon.statGrowth.hp * enemyLevel,
+      hp,
       attack: pokemon.lv1Stats.attack + pokemon.statGrowth.attack * enemyLevel,
       defense:
         pokemon.lv1Stats.defense + pokemon.statGrowth.defense * enemyLevel,
       speed: pokemon.lv1Stats.speed + pokemon.statGrowth.speed * enemyLevel,
       catchRate: pokemon.catchRate,
     },
+    lv1Stats: pokemon.lv1Stats,
+    statGrowth: pokemon.statGrowth,
   };
 
-  return NextResponse.json({
-    ok: true,
-    result,
-  });
+  return NextResponse.json({ ok: true, result });
 }

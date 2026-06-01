@@ -7,15 +7,15 @@ export async function GET() {
 
   const db = client.db('pokemon');
 
-  const pokemonColl = db.collection('pokemon');
-  const result = await pokemonColl.updateMany(
-    {},
-    {
-      $set: {
-        habitat: null,
-      },
-    },
-  );
+  // const pokemonColl = db.collection('pokemon');
+  // const result = await pokemonColl.updateMany(
+  //   {},
+  //   {
+  //     $set: {
+  //       habitat: null,
+  //     },
+  //   },
+  // );
 
   // const historyResult = await historyColl.updateMany({}, [
   //   {
@@ -28,6 +28,6 @@ export async function GET() {
   return NextResponse.json({
     ok: true,
     message: 'habitat 필드 넣기 성공',
-    data: result,
+    // data: result,
   });
 }
