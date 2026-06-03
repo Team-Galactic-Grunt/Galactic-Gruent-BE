@@ -1,4 +1,8 @@
-import { getClientPromise } from '@/app/lib/mongodb'; // ◀ 중괄호 { } 추가
+// 레벨 받아오기
+// const avgLevel = Number(searchParams.get('avgLevel') ?? 50);
+// getClientPromise가 async 함수이므로 await를 붙여서 client 인스턴스를 가져옵니다.
+
+import { getClientPromise } from '@/app/lib/mongodb';
 import { NextResponse } from 'next/server';
 
 function calcNeedExp(level: number) {
@@ -10,9 +14,6 @@ function calcGiveExp(level: number) {
 }
 
 export async function POST(req: Request) {
-  // 레벨 받아오기
-  // const avgLevel = Number(searchParams.get('avgLevel') ?? 50);
-  // getClientPromise가 async 함수이므로 await를 붙여서 client 인스턴스를 가져옵니다.
   const client = await getClientPromise();
 
   const db = client.db('pokemon');

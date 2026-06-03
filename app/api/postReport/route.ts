@@ -1,13 +1,13 @@
 import { getClientPromise } from '@/app/lib/mongodb'; // ◀ 중괄호 { } 추가
 import { NextResponse } from 'next/server';
 
-
-
 export async function POST(req: Request) {
   const body = await req.json();
-  const { position, bag, isMyPokemon, pokemonBox } = body;
+  const { position, bag, isMyPokemon, pokemonBox, pokedex } = body;
 
-  if (!position || !bag || !isMyPokemon || !pokemonBox) {
+  console.log(pokedex);
+
+  if (!position || !bag || !isMyPokemon || !pokemonBox || !pokedex) {
     return NextResponse.json(
       {
         ok: false,
@@ -22,16 +22,25 @@ export async function POST(req: Request) {
   const client = await getClientPromise();
   const db = client.db('pokemon');
   const historyColl = db.collection('game_history');
+  const pokedexColl = db.collection('pokedex');
 
-  const result = await historyColl.updateOne(
+  const historyResult = await historyColl.updateOne(
     {},
-    {
-      $set: body,
-    },
+    { $set: body },
     { upsert: true },
   );
 
-  if (result.acknowledged) {
+  const pokedexResult = await pokedexColl.bulkWrite(
+    pokedex.map((entry: { id: number }) => ({
+      updateOne: {
+        filter: { id: entry.id },
+        update: { $set: entry },
+        upsert: true,
+      },
+    })),
+  );
+
+  if (historyResult.acknowledged && pokedexResult.ok) {
     return NextResponse.json({
       ok: true,
       message: '레포트 성공',

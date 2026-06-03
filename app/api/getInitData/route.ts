@@ -1,8 +1,6 @@
 import { getClientPromise } from '@/app/lib/mongodb';
 import { NextResponse } from 'next/server';
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 export async function GET() {
   const client = await getClientPromise();
 
@@ -11,17 +9,11 @@ export async function GET() {
 
   const pokedex = await pokedexColl
     .find({}, { projection: { _id: 0 } })
+    .sort({ sinnohNo: 1 })
     .toArray();
 
   const result = await historyColl.findOne({}, { projection: { _id: 0 } });
   console.log('history result: ', result?.bag);
-
-  //   console.log(
-  //     historyResult?.position,
-  //     historyResult?.bag,
-  //     historyResult?.isMyPokemon,
-  //     historyResult?.pokemonBox,
-  //   );
 
   return NextResponse.json({
     ok: true,
