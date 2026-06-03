@@ -27,7 +27,10 @@ export async function GET() {
 
   const dexColl = client.db('pokemon').collection('pokedex');
 
-  const result = await dexColl.find({}, { projection: { _id: 0 } }).toArray();
+  const result = await dexColl
+    .find({}, { projection: { _id: 0 } })
+    .sort({ sinnohNo: 1 })
+    .toArray();
 
   return NextResponse.json({
     ok: true,

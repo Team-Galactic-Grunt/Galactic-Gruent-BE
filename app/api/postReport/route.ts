@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     })),
   );
 
-  if (historyResult.acknowledged && pokedexResult.ok) {
+  if (historyResult.acknowledged && pokedexResult.isOk()) {
     return NextResponse.json({
       ok: true,
       message: '레포트 성공',
